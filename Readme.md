@@ -40,8 +40,8 @@ Ubuntu
 Contribute
 ----------
 
-- Issue Tracker: github.com/sixteenmillimeter/v2f/issues
-- Source Code: github.com/sixteenmillimeter/v2f
+- Issue Tracker: https://github.com/sixteenmillimeter/v2f/issues
+- Source Code: https://github.com/sixteenmillimeter/v2f
 
 Support
 -------
