@@ -1,7 +1,7 @@
 {
-  "name": "video_to_page",
+  "name": "v2f",
   "version": "1.0.0",
-  "description": "Turn a video into a page of stills 16mm size",
+  "description": "Turn a video into strips of precise 16mm-size stills",
   "main": "v2f.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
