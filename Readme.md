@@ -5,7 +5,11 @@ Convert video to 16mm-sized strips of frames. For transferring to acetate and ot
 
 Look how easy it is to use:
 
-    v2f ./path_to_video.mov 300 -v
+    ./v2f ./path_to_video.mov 300
+
+or from source
+
+	node v2f.js ./path_to_video.mov 300
 
 This will turn "path_to_video.mov" into strips of 16mm-sized frames that will printing at 300dpi. They are broken up into 8.5x11in pages.
 
