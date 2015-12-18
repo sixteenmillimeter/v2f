@@ -13,6 +13,11 @@ or from source
 
 This will turn "path_to_video.mov" into strips of 16mm-sized frames that will printing at 300dpi. They are broken up into 8.5x11in pages.
 
+Releases
+--------
+
+[1.0.0](https://github.com/sixteenmillimeter/v2f/releases/tag/1.0.0)
+
 
 Dependencies
 ------------
