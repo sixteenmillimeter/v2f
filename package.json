@@ -1,0 +1,19 @@
+{
+  "name": "video_to_page",
+  "version": "1.0.0",
+  "description": "Turn a video into a page of stills 16mm size",
+  "main": "video_to_page.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "mmcwilliams",
+  "license": "MIT",
+  "nexe" : {
+	  "output" : "../video_to_page_nexe/video_to_page",
+	  "runtime": {
+			"ignoreFlags": true,
+			"framework" : "nodejs",
+			"version" : "5.0.0"
+		}
+  }
+}
