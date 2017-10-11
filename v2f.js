@@ -1,103 +1,119 @@
-var exec = require('child_process').exec,
-	fs = require('fs'),
-	_tmp = './temp';
+/*jshint strict: true, esversion:6, node: true, asi: true*/
 
-//var frame_height = 7.61;
-//var frame_height = 7.49;
-var frame_height = 7.62;
-var frame_padding = 0;
+'use strict'
+const exec = require('child_process').exec
+const fs = require('fs')
+const _tmp = './temp'
 
-var frame_dimensions = function (dpi) {
-	var h = Math.round(frame_height * (dpi / 25.4)),
-		w = Math.round(10.5 * (dpi / 25.4)),
-		o = Math.round(16 * (dpi / 25.4));
-	return {h: h, w: w, o: o, dpi: dpi};
-};
+//var frame_height = 7.61
+//var frame_height = 7.49
+let frame_height = 7.62
+let frame_padding = 0
 
-/*
-convert() - Turn video into sheet of images
+class Dimensions{
+	constructor (film, dpi) {
+		const IN = dpi / 25.4
+		this.h = Math.round(film.frame_height * IN)
+		this.w = Math.round(film.a * IN)
+		this.o = Math.round(film.b * IN)
+		this.dpi = dpi
+		this.film = film
+	}
+}
 
-@param: path - file path (absolute)
-@param: dpi - target printing dpi
-@param: length - strip length in frames
+/** *
+ * Turn video into sheet of images
 
+ * @function
+ * @param {String} 	path  file path (absolute)
+ * @param {Integer} dpi target printing dpi
+ * @param {Integer} length strip length in frames
+ * 
 */
-var convert = function (path, dpi) {
-	'use strict';
-	var dim = frame_dimensions(dpi),
-		file = path.split('/').pop(),
-		loc = _tmp + '/',
-		execStr = 'avconv -i "' + path + '" -s ' + dim.w + 'x' + dim.h + ' -qscale 1 "' + loc + 'sequence_%04d.jpg"';
+function convert (path, dpi) {
+	const film = { frame_height: frame_height, a : 10.5, b : 16}
+	const dim = new Dimensions(film, dpi)
+	const file = path.split('/').pop()
+	const loc = _tmp + '/'
+	const execStr = `avconv -i "${path}" -s ${dim.w}x${dim.h} -qscale 1 "${loc}sequence_%04d.jpg"`
 
-	console.log('Converting ' + file + '...');
-	console.log('Exporting all frames with aspect ratio: ' + (dim.w / dim.h) + '...');
+	console.log(`Converting  ${file}...`)
+	console.log(`Exporting all frames with aspect ratio:  ${dim.w / dim.h} ...`)
 
-	fs.mkdirSync(_tmp);
+	fs.mkdirSync(_tmp)
 
-	exec(execStr, function (ste, std) {
+	exec(execStr, (ste, std) => {
 		if (ste) {
-			return errorHandle(ste);
+			return errorHandle(ste)
 		}
-		console.log('Frames exported successfully!');
-		stitch(loc.substring(0, loc.length - 1), dim);
-	});
-};
+		console.log('Frames exported successfully!')
+		stitch(loc.substring(0, loc.length - 1), dim)
+	})
+}
 
-var stitch = function (loc, dim) {
-	'use strict';
-	var length = Math.floor((11 * dim.dpi) / dim.h) - 1,
-		width = Math.floor((8.5 * dim.dpi / dim.o)) - 1,
-		page = 0,
-		pageCount = 0,
-		cmd = 'find "' + loc + '" -type f -name "sequence_*.jpg"',
-	find_cb = function (ste, std) {
+/** *
+ * Stitch rendered frames into strips
+
+ * @function
+ * @param {String} 	loc   Path of folder containing frames
+ * @param {Object}  dim   Dimensions object
+ * 
+*/
+
+function stitch (loc, dim) {
+	const length = Math.floor((11 * dim.dpi) / dim.h) - 1
+	const width = Math.floor((8.5 * dim.dpi / dim.o)) - 1
+	let page = 0
+	let pageCount = 0
+	let cmd = `find "${loc}" -type f -name "sequence_*.jpg"`
+	function find_cb (ste, std) {
 		if (ste) {
-			return errorHandle(ste);
+			return errorHandle(ste)
 		}
-		var frames = std.split('\n'),
-			execStr = 'montage ',
-		montage_cb = function (stee, stdd) {
+		const frames = std.split('\n')
+		let execStr = 'montage '
+		function montage_cb (stee, stdd) {
 			if (stee) {
-				return errorHandle(ste);
+				return errorHandle(ste)
 			}
 
-			console.log('Created page_' + pageCount + '.jpg!');
-			pageCount++;
+			console.log(`Created page_${pageCount}.jpg!`)
+			pageCount++
 			if (pageCount === page) {
 				console.log('Cleaning up...');
-				setTimeout(function () {
-					exec('find "' + loc + '" -type f -name "sequence_*.jpg" -delete', function () {
-						fs.rmdirSync(_tmp);
-						console.log('Done!');
-					});
-				}, 1000);
+				setTimeout(() => {
+					exec(`find "${loc}" -type f -name "sequence_*.jpg" -delete`,  () => {
+						fs.rmdirSync(_tmp)
+						console.log('Done!')
+					})
+				}, 1000)
 			}
 		};
-		for (var i = 0; i < frames.length; i++) {
-			execStr += frames[i] + ' ';
+		for (let i = 0; i < frames.length; i++) {
+			execStr += frames[i] + ' '
 			if ((i + 1) % (width * length) === 0 || i === frames.length - 1) {
-				execStr += '\ -tile 1x' + length + '  -geometry ' + dim.w + 'x' + dim.h + '+' + Math.round((dim.o - dim.w) / 2) + '+0 miff:- |\  \nmontage - -geometry +0+0 -tile ' + width + 'x1 -density ' + dim.dpi + ' "./page_' + page + '.jpg"';
-				exec(execStr, montage_cb);
-				execStr = 'montage ';
-				page++;
+				execStr += '\ -tile 1x' + length + '  -geometry ' + dim.w + 'x' + dim.h + '+' + Math.round((dim.o - dim.w) / 2) + '+0 miff:- |\  \nmontage - -geometry +0+0 -tile ' + width + 'x1 -density ' + dim.dpi + ' "./page_' + page + '.jpg"'
+				exec(execStr, montage_cb)
+				execStr = 'montage '
+				page++
 			}
 		}
-	};
-
-	loc = _tmp;
-
-	console.log('Stitching frames into sheets...');
-	console.log('Sheets will contain ' + width + 'x' + length + ' frames...');
-	exec(cmd, find_cb);
-};
-var errorHandle = function (err) {
-	'use strict';
-	if (process.argv.indexOf('-v') !== -1 || process.argv.indexOf('--verbose') !== -1){
-		console.error(err);
-	} else {
-		console.error('Error running program. Run in verbose mode for more info (-v,--verbose)');
 	}
-	process.exit(1);
+
+	loc = _tmp
+
+	console.log('Stitching frames into sheets...')
+	console.log(`Sheets will contain ${width}x${length} frames...`)
+	exec(cmd, find_cb)
+};
+
+var errorHandle = function (err) {
+	if (process.argv.indexOf('-v') !== -1 || process.argv.indexOf('--verbose') !== -1){
+		console.error(err)
+	} else {
+		console.error('Error running program. Run in verbose mode for more info (-v,--verbose)')
+	}
+	process.exit(1)
 };
 
 process.on('uncaughtException', function (err) {
