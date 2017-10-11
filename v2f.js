@@ -40,7 +40,7 @@ function convert (path, dpi) {
 	console.log(`Converting  ${file}...`)
 	console.log(`Exporting all frames with aspect ratio:  ${dim.w / dim.h} ...`)
 
-	fs.mkdirSync(_tmp)
+	if (!fs.existsSync(_tmp)) fs.mkdirSync(_tmp)
 
 	exec(execStr, (ste, std) => {
 		if (ste) {
