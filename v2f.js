@@ -3,7 +3,7 @@
 'use strict'
 const exec = require('child_process').exec
 const fs = require('fs')
-const _tmp = './temp'
+const _tmp = '/tmp'
 
 //var frame_height = 7.61
 //var frame_height = 7.49
@@ -88,7 +88,7 @@ function stitch (loc, dim) {
 					})
 				}, 1000)
 			}
-		};
+		}
 		for (let i = 0; i < frames.length; i++) {
 			execStr += frames[i] + ' '
 			if ((i + 1) % (width * length) === 0 || i === frames.length - 1) {
@@ -105,7 +105,7 @@ function stitch (loc, dim) {
 	console.log('Stitching frames into sheets...')
 	console.log(`Sheets will contain ${width}x${length} frames...`)
 	exec(cmd, find_cb)
-};
+}
 
 var errorHandle = function (err) {
 	if (process.argv.indexOf('-v') !== -1 || process.argv.indexOf('--verbose') !== -1){
@@ -116,22 +116,22 @@ var errorHandle = function (err) {
 	process.exit(1)
 };
 
-process.on('uncaughtException', function (err) {
-	errorHandle(err);
-});
+process.on('uncaughtException', err => {
+	errorHandle(err)
+})
 
 
 if (typeof process.argv[2] === 'undefined') {
-	console.error('No path to video defined');
-	process.exit(1);
+	console.error('No path to video defined')
+	process.exit(1)
 }
 
 if (typeof process.argv[3] === 'undefined') {
-	process.argv[3] = 300;
-	console.log('Using default 300dpi');
+	process.argv[3] = 300
+	console.log('Using default 300dpi')
 }
 
-convert(process.argv[2], process.argv[3]);
+convert(process.argv[2], process.argv[3])
 
 /*
 
