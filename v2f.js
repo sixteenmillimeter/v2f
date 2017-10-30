@@ -1,53 +1,103 @@
 /*jshint strict: true, esversion:6, node: true, asi: true*/
 
 'use strict'
+const cmd = require('commander')
+const async = require('async')
 const exec = require('child_process').exec
 const fs = require('fs')
-const _tmp = '/tmp'
+const path = require('path')
 
-//var frame_height = 7.61
-//var frame_height = 7.49
-let frame_height = 7.62
-let frame_padding = 0
+const TMP = '/tmp/v2f/'
 
 class Dimensions{
-	constructor (film, dpi) {
+	constructor (filmStr, dpi) {
 		const IN = dpi / 25.4
-		this.h = Math.round(film.frame_height * IN)
-		this.w = Math.round(film.a * IN)
-		this.o = Math.round(film.b * IN)
+		const film = this._gauge(filmStr)
+
+		this.h = Math.round(film.h * IN) //frame height
+		this.w = Math.round(film.w * IN) //frame width
+		this.o = Math.round(film.o * IN) //space between columns
 		this.dpi = dpi
 		this.film = film
 	}
+
+	_gauge (film) {
+		if (film === '16mm') {
+			return {
+				h: 7.62,
+				w : 10.5,
+				o : 16
+			}
+		} else if (film === 'super16'){
+			return {
+				h: 7.62,
+				w : 12.75,
+				o : 16
+			}
+		} else if (film === '35mm') {
+			return {
+				h : 19.05,
+				w : 22,
+				o : 35
+			}
+		} else {
+			error('Film type not found, see --help for more info')
+		}
+	}
+}
+
+/**
+ * 
+ *
+ * @function
+ * @param {Object} Commander object
+ */
+function initialize (command) {
+	const dpi = command.dpi || 300
+	const film = command.film || '16mm'
+	const input = command.input || command.args[0] || error('No input file, see --help for more info')
+	const output = command.output || command.args[1] || error('No ouput directory, see --help for more info')
+	const dim = new Dimensions(film, dpi)
+
+	if (!fs.existsSync(input)) error(`Video "${input}" cannot be found`)
+
+	async.series([
+		next => {
+			convert(input, dim, next)
+		},
+		next => {
+			stitch(output, dim, next)
+		},
+		cleanup
+	], () => {
+		console.log(`Finished creating pages`)
+	})
 }
 
 /** *
- * Turn video into sheet of images
-
+ * Create image sequence from source video, using
+ * 
  * @function
- * @param {String} 	path  file path (absolute)
- * @param {Integer} dpi target printing dpi
- * @param {Integer} length strip length in frames
+ * @param {String} 		input  	file path (absolute)
+ * @param {Integer} 	dpi 	target printing dpi
+ * @param {Integer} 	length 	strip length in frames
  * 
 */
-function convert (path, dpi) {
-	const film = { frame_height: frame_height, a : 10.5, b : 16}
-	const dim = new Dimensions(film, dpi)
-	const file = path.split('/').pop()
-	const loc = _tmp + '/'
-	const execStr = `avconv -i "${path}" -s ${dim.w}x${dim.h} -qscale 1 "${loc}sequence_%04d.jpg"`
+function convert (input, dim, next) {
+	const file = input.split('/').pop()
+	const execStr = `avconv -i "${input}" -s ${dim.w}x${dim.h} -qscale 1 "${TMP}v2f_sequence_%04d.jpg"`
 
 	console.log(`Converting  ${file}...`)
-	console.log(`Exporting all frames with aspect ratio:  ${dim.w / dim.h} ...`)
+	console.log(`Exporting all frames with aspect ratio:  ${dim.w / dim.h}...`)
 
-	if (!fs.existsSync(_tmp)) fs.mkdirSync(_tmp)
+	if (!fs.existsSync(TMP)) fs.mkdirSync(TMP)
 
 	exec(execStr, (ste, std) => {
 		if (ste) {
-			return errorHandle(ste)
+			return error(ste)
 		}
 		console.log('Frames exported successfully!')
-		stitch(loc.substring(0, loc.length - 1), dim)
+		next()
 	})
 }
 
@@ -55,114 +105,110 @@ function convert (path, dpi) {
  * Stitch rendered frames into strips
 
  * @function
- * @param {String} 	loc   Path of folder containing frames
- * @param {Object}  dim   Dimensions object
+ * @param {String}	 	output   	Path of folder containing frames
+ * @param {Object}	  	dim   		Dimensions object
+ * @param {Function}	next		Async lib callback function
  * 
 */
-
-function stitch (loc, dim) {
+function stitch (output, dim, next) {
 	const length = Math.floor((11 * dim.dpi) / dim.h) - 1
 	const width = Math.floor((8.5 * dim.dpi / dim.o)) - 1
+	const loc = TMP.substring(0, TMP.length - 1)
+	const diff = Math.round((dim.o - dim.w) / 2)
 	let page = 0
 	let pageCount = 0
-	let cmd = `find "${loc}" -type f -name "sequence_*.jpg"`
-	function find_cb (ste, std) {
-		if (ste) {
-			return errorHandle(ste)
-		}
-		const frames = std.split('\n')
-		let execStr = 'montage '
-		function montage_cb (stee, stdd) {
-			if (stee) {
-				return errorHandle(ste)
-			}
-
-			console.log(`Created page_${pageCount}.jpg!`)
-			pageCount++
-			if (pageCount === page) {
-				console.log('Cleaning up...');
-				setTimeout(() => {
-					exec(`find "${loc}" -type f -name "sequence_*.jpg" -delete`,  () => {
-						fs.rmdirSync(_tmp)
-						console.log('Done!')
-					})
-				}, 1000)
-			}
-		}
-		for (let i = 0; i < frames.length; i++) {
-			execStr += frames[i] + ' '
-			if ((i + 1) % (width * length) === 0 || i === frames.length - 1) {
-				execStr += '\ -tile 1x' + length + '  -geometry ' + dim.w + 'x' + dim.h + '+' + Math.round((dim.o - dim.w) / 2) + '+0 miff:- |\  \nmontage - -geometry +0+0 -tile ' + width + 'x1 -density ' + dim.dpi + ' "./page_' + page + '.jpg"'
-				exec(execStr, montage_cb)
-				execStr = 'montage '
-				page++
-			}
-		}
-	}
-
-	loc = _tmp
+	let cmd = `find "${loc}" -type f -name "v2f_sequence_*.jpg"`
 
 	console.log('Stitching frames into sheets...')
 	console.log(`Sheets will contain ${width}x${length} frames...`)
-	exec(cmd, find_cb)
+
+	exec(cmd, (ste, std) => {
+		if (ste) {
+			return error(ste)
+		}
+		let jobs = []
+		let cmds = []
+		let frames = std.split('\n')
+		let execStr = 'montage '
+		let pagePath = ``
+		let i = 0
+
+		frames = frames.filter(elem => {
+			if (elem.indexOf('find: ') === -1) {
+				return elem
+			}
+		})
+		frames.sort()
+		for (let frame of frames) {
+			execStr += `${frame} `
+			if ((i + 1) % (width * length) === 0 || i === frames.length - 1) {
+				pagePath = path.join(output, `./page_${pad(page)}.jpg`)
+				execStr += `\ -tile 1x${length} -geometry ${dim.w}x${dim.h}+${diff}+0 miff:- |\  \nmontage - -geometry +0+0 -tile ${width}x1 -density ${dim.dpi} "${pagePath}"`
+				console.log(execStr)
+				process.exit()
+				cmds.push(execStr)
+				execStr = 'montage '
+				page++
+			}
+			i++
+		}
+		jobs = cmds.map(cmd => {
+			return cb => {
+				exec(cmd, (err, std, ste) => {
+					if (err) {
+						return error(err)
+					}
+					console.log(`Created page of ${width}x${length} frames!`)
+					cb()
+				})
+			}
+		})
+		async.series(jobs, next)
+	})
 }
 
-var errorHandle = function (err) {
+function cleanup (next) {
+	console.log('Cleaning up...');
+	exec(`rm -r "${TMP}"`,  (err) => {
+		if (err) console.error(err)
+		if (next) next()
+	})
+}
+
+function pad (n) {
+	return ('00000' + n).slice(-5)
+}
+
+var error = function (err) {
 	if (process.argv.indexOf('-v') !== -1 || process.argv.indexOf('--verbose') !== -1){
 		console.error(err)
 	} else {
 		console.error('Error running program. Run in verbose mode for more info (-v,--verbose)')
 	}
 	process.exit(1)
-};
+}
 
 process.on('uncaughtException', err => {
-	errorHandle(err)
+	error(err)
 })
 
+//convert(process.argv[2], process.argv[3])
 
-if (typeof process.argv[2] === 'undefined') {
-	console.error('No path to video defined')
-	process.exit(1)
+//fix for nexe
+let args = [].concat(process.argv)
+if (args[1].indexOf('v2f.js') === -1) {
+	args.reverse()
+	args.push('node')
+	args.reverse()
 }
 
-if (typeof process.argv[3] === 'undefined') {
-	process.argv[3] = 300
-	console.log('Using default 300dpi')
-}
+cmd.arguments('<input> <output>')
+	.version('1.1.0')
+	.option('-i, --input <path>', 'Video source to print to film strip, anything that avconv can read')
+	.option('-o, --output <path>', 'Output directory, will print images on A4 standard paper file')
+	.option('-d, --dpi <dpi>', 'DPI output pages')
+	.option('-f, --film <gauge>', 'Choose film gauge: 16mm, super16, 35mm')
+	.option('-v, --verbose', 'Run in verbose mode')
+	.parse(args)
 
-convert(process.argv[2], process.argv[3])
-
-/*
-
-	INSTALLATION AND RUNNING
-
-*/
-
-//Install in this order to satisfy requirements: GCC required by MacPorts, etc.
-
-//Install Node         http://nodejs.org/dist/v0.10.22/node-v0.10.22.pkg
-//Install GCC          https://github.com/kennethreitz/osx-gcc-installer#option-1-downloading-pre-built-binaries
-//Install MacPorts     http://www.macports.org/install.php
-//Install ImageMagick  in terminal type "sudo port install ImageMagick"
-//Install avconv        -see below
-
-/*
-Download and unzip http://libav.org/releases/libav-9.6.tar.gz
-in terminal type "cd " and drag in unzipped folder and hit enter
-in terminal copy "sudo port install yasm zlib bzip2 faac lame speex libogg libvorbis libtheora libvpx x264 XviD openjpeg15 opencore-amr freetype" (without quotes) hit enter
-in terminal copy "./configure \ --enable-gpl --enable-libx264 --enable-libxvid \ --enable-version3 --enable-libopencore-amrnb --enable-libopencore-amrwb \ --enable-nonfree --enable-libfaac \ --enable-libmp3lame --enable-libspeex --enable-libvorbis --enable-libtheora --enable-libvpx \ --enable-libopenjpeg --enable-libfreetype --enable-doc --enable-gnutls --enable-shared" hit enter
-(if that gives errors just use "./configure" and hit enter)
-in terminal copy "make && sudo make install" hit enter
-
-	that will install it
-*/
-
-//run by going to terminal typing "node " dragging this script into the terminal, dragging the video into the terminal and adding a DPI value and hitting enter
-//the command should look something like this:
-//node /Users/stenzel/Desktop/video_to_page.js /Users/stenzel/Desktop/PaulRobeson/Paul\ Robeson\ discusses\ Othello.mp4 600
-
-
-//Get the absolute path of any file by dragging it into terminal and copying the results
-//Must be enclosed by ''
-//Will generate pages and frames in same folder as source video
+initialize(cmd)
