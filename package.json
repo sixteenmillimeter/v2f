@@ -1,6 +1,6 @@
 {
   "name": "v2f",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Turn a video into strips of precise 16mm-size stills",
   "main": "v2f.js",
   "scripts": {
@@ -8,12 +8,16 @@
   },
   "author": "mmcwilliams",
   "license": "MIT",
-  "nexe" : {
-	  "output" : "../video_to_page_nexe/v2f",
-	  "runtime": {
-			"ignoreFlags": true,
-			"framework" : "nodejs",
-			"version" : "5.0.0"
-		}
+  "nexe": {
+    "output": "../video_to_page_nexe/v2f",
+    "runtime": {
+      "ignoreFlags": true,
+      "framework": "nodejs",
+      "version": "8.7.0"
+    }
+  },
+  "dependencies": {
+    "async": "^2.5.0",
+    "commander": "^2.11.0"
   }
 }

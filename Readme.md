@@ -3,7 +3,7 @@ v2f
 
 Convert video to 16mm-sized strips of frames. For transferring to acetate and other experimental needs.
 
-Look how easy it is to use:
+Use the distributed binary
 
     ./v2f ./path_to_video.mov 300
 
@@ -22,7 +22,7 @@ Releases
 Dependencies
 ------------
 
-- node.js (or use a compiled version)
+- node.js (or use a [released version](https://github.com/sixteenmillimeter/v2f/releases/))
 - libav
 - ImageMagick
 
@@ -37,11 +37,14 @@ Ubuntu
 
 	apt-get install libav imagemagick
 
+
+
 Contribute
 ----------
 
 - Issue Tracker: https://github.com/sixteenmillimeter/v2f/issues
 - Source Code: https://github.com/sixteenmillimeter/v2f
+- Home Page: https://sixteenmillimeter.com/projects/v2f
 
 Support
 -------
