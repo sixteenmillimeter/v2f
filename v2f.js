@@ -144,8 +144,6 @@ function stitch (output, dim, next) {
 			if ((i + 1) % (width * length) === 0 || i === frames.length - 1) {
 				pagePath = path.join(output, `./page_${pad(page)}.jpg`)
 				execStr += `\ -tile 1x${length} -geometry ${dim.w}x${dim.h}+${diff}+0 miff:- |\  \nmontage - -geometry +0+0 -tile ${width}x1 -density ${dim.dpi} "${pagePath}"`
-				console.log(execStr)
-				process.exit()
 				cmds.push(execStr)
 				execStr = 'montage '
 				page++
