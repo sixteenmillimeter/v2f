@@ -34,8 +34,8 @@ Options
 Releases
 --------
 
-[1.1.0](https://github.com/sixteenmillimeter/v2f/releases/tag/1.1.0)
-[1.0.0](https://github.com/sixteenmillimeter/v2f/releases/tag/1.0.0)
+* [1.1.1](https://github.com/sixteenmillimeter/v2f/releases/tag/1.1.1)
+* [1.0.0](https://github.com/sixteenmillimeter/v2f/releases/tag/1.0.0)
 
 
 Dependencies
