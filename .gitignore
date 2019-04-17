@@ -2,3 +2,5 @@ node_modules
 tmp/*
 temp/*
 .nexe
+dist
+.DS_Store

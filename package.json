@@ -5,7 +5,7 @@
   "main": "v2f.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "./node_modules/.bin/nexe ./ --build",
+    "build": "sh ./scripts/build.sh",
     "compile": "./node_modules/.bin/tsc ./src/v2f.ts --outFile ./v2f.js --noImplicitAny --lib ES2017 --lib ES2016 -t ES2016",
     "docs": "./node_modules/.bin/jsdoc2md ./v2f.js > ./docs/Readme.md"
   },
