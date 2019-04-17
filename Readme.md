@@ -22,13 +22,15 @@ Options
 
   Options:
 
-    -V, --version        output the version number
-    -i, --input <path>   Video source to print to film strip, anything that avconv can read
-    -o, --output <path>  Output directory, will print images on A4 standard paper file
-    -d, --dpi <dpi>      DPI output pages
-    -f, --film <gauge>   Choose film gauge: 16mm, super16, 35mm
-    -v, --verbose        Run in verbose mode
-    -h, --help           output usage information
+    -V, --version          output the version number
+    -i, --input <path>     Video source to print to film strip, anything that avconv can read
+    -o, --output <path>    Output directory, will render images on specified page size
+    -d, --dpi <dpi>        DPI output pages
+    -f, --film <gauge>     Choose film gauge: 16mm, super16, 35mm
+    -w, --width <inches>   Output page width, in inches. Default 8.5
+    -l, --length <inches>  Output page length, in inches. Default 11
+    -v, --verbose          Run in verbose mode
+    -h, --help             output usage information
 ```
 
 Releases
