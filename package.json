@@ -1,10 +1,12 @@
 {
   "name": "v2f",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Turn a video into strips of precise 16mm-size stills",
   "main": "v2f.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "./node_modules/.bin/nexe ./ --build",
+    "compile": "./node_modules/.bin/tsc ./src/v2f.ts --outFile ./v2f.js --noImplicitAny --lib ES2017 --lib ES2016 -t ES2016"
   },
   "author": "mmcwilliams",
   "license": "MIT",
@@ -17,7 +19,13 @@
     }
   },
   "dependencies": {
-    "async": "^2.5.0",
+    "async": "^2.6.2",
     "commander": "^2.11.0"
+  },
+  "devDependencies": {
+    "@types/node": "^11.13.4",
+    "jsdoc-to-markdown": "^4.0.1",
+    "nexe": "^3.1.0",
+    "typescript": "^3.4.3"
   }
 }
