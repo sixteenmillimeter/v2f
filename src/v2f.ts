@@ -9,6 +9,7 @@ const os = require('os')
 
 const osTmp : string = os.tmpdir()
 const TMP : string = path.join(osTmp, '/v2f/')
+const pkg : any = require('package.json')
 
 class Dimensions{
 	h : number;
@@ -67,12 +68,14 @@ function initialize (command : any) {
 	const dim : any = new Dimensions(film, dpi)
 	const pageW : number = command.width || 8.5
 	const pageL : number = command.length || 11
+	const exe : string = command.executable || 'avconv'
+	const negative : boolean = typeof command.negative !== 'undefined' ? true : false
 
 	if (!fs.existsSync(input)) error(`Video "${input}" cannot be found`)
 
 	async.series([
 		(next : any)=> {
-			convert(input, dim, next)
+			convert(exe, input, dim, negative, next)
 		},
 		(next : any) => {
 			stitch(output, dim, next, pageW, pageL)
@@ -92,9 +95,10 @@ function initialize (command : any) {
  * @param {Integer} 	length 	strip length in frames
  * 
 */
-function convert (input : string, dim : any, next : any) {
+function convert (exe : string, input : string, dim : any, negative : boolean = false, next : any) {
 	const file : string = input.split('/').pop()
-	const execStr : string = `avconv -i "${input}" -s ${dim.w}x${dim.h} -qscale 1 "${TMP}v2f_sequence_%04d.jpg"`
+	const negStr : string = negative ? `-vf lutrgb="r=negval:g=negval:b=negval"` : '';
+	const execStr : string = `${exe} -i "${input}" -s ${dim.w}x${dim.h} -qscale 1 ${negStr} "${TMP}v2f_sequence_%04d.jpg"`
 
 	console.log(`Converting  ${file}...`)
 	console.log(`Exporting all frames with aspect ratio:  ${dim.w / dim.h}...`)
@@ -212,14 +216,16 @@ if (args[1].indexOf('v2f.js') === -1) {
 }
 
 cmd.arguments('<input> <output>')
-	.version('1.1.0')
+	.version(pkg.version)
 	.option('-i, --input <path>', 'Video source to print to film strip, anything that avconv can read')
 	.option('-o, --output <path>', 'Output directory, will render images on specified page size')
 	.option('-d, --dpi <dpi>', 'DPI output pages')
 	.option('-f, --film <gauge>', 'Choose film gauge: 16mm, super16, 35mm')
 	.option('-w, --width <inches>', 'Output page width, in inches. Default 8.5')
 	.option('-l, --length <inches>', 'Output page length, in inches. Default 11')
+	.option('-e, --executable <binary>', 'Alternate binary to use in place of avconv')
 	.option('-v, --verbose', 'Run in verbose mode')
+	.option('-n, --negative', 'Invert color channels to create negative')
 	.parse(args)
 
 initialize(cmd)
