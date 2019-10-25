@@ -12,7 +12,7 @@
   "author": "mmcwilliams",
   "license": "MIT",
   "nexe": {
-    "output": "../video_to_page_nexe/v2f",
+    "output": "./dist/v2f",
     "runtime": {
       "ignoreFlags": true,
       "framework": "nodejs",
