@@ -7,7 +7,7 @@ const path = require('path');
 const os = require('os');
 const osTmp = os.tmpdir();
 const TMP = path.join(osTmp, '/v2f/');
-const pkg = require('package.json');
+const pkg = require('./package.json');
 class Dimensions {
     constructor(filmStr, dpi) {
         const IN = dpi / 25.4;
@@ -202,7 +202,7 @@ cmd.arguments('<input> <output>')
     .option('-f, --film <gauge>', 'Choose film gauge: 16mm, super16, 35mm')
     .option('-w, --width <inches>', 'Output page width, in inches. Default 8.5')
     .option('-l, --length <inches>', 'Output page length, in inches. Default 11')
-    .option('-e, --executable <binary>', 'Alternate binary to use in place of avconv')
+    .option('-e, --executable <binary>', 'Alternate binary to use in place of avconv, ie ffmpeg')
     .option('-v, --verbose', 'Run in verbose mode')
     .option('-n, --negative', 'Invert color channels to create negative')
     .parse(args);
