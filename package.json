@@ -11,6 +11,7 @@
   },
   "author": "mmcwilliams",
   "license": "MIT",
+
   "dependencies": {
     "async": "^2.6.2",
     "commander": "^2.11.0"
