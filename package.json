@@ -5,28 +5,27 @@
   "main": "v2f.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "sh ./scripts/build.sh",
+    "build": "node build.js",
     "compile": "./node_modules/.bin/tsc ./src/v2f.ts --outFile ./v2f.js --noImplicitAny --lib ES2017 --lib ES2016 -t ES2016",
     "docs": "./node_modules/.bin/jsdoc2md ./v2f.js > ./docs/Readme.md"
   },
   "author": "mmcwilliams",
   "license": "MIT",
-  "nexe": {
-    "output": "../video_to_page_nexe/v2f",
-    "runtime": {
-      "ignoreFlags": true,
-      "framework": "nodejs",
-      "version": "8.7.0"
-    }
-  },
   "dependencies": {
     "async": "^2.6.2",
     "commander": "^2.11.0"
   },
   "devDependencies": {
     "@types/node": "^11.13.4",
+    "fs-extra": "^8.1.0",
     "jsdoc-to-markdown": "^4.0.1",
-    "nexe": "^3.1.0",
+    "pkg": "^4.4.0",
     "typescript": "^3.4.3"
+  },
+  "pkg": {
+    "scripts": [
+      "./v2f.js",
+      "./package.json"
+    ]
   }
 }
